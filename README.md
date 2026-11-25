@@ -6,29 +6,27 @@
 
 ## 实机渲染对照
 
-下面两张均已开启透墨。它们取自 Kindle Paperwhite 3 上的 KOReader Tategumi v2026.10.1 与 toumo 1.1.1 的真实渲染，使用 44 像素字号、两层墨影、标准浓度和细淡纸纹。点击图片可以查看原尺寸。
+下面两张均已开启透墨。两组样张来自 Kindle Paperwhite 3 上的 KOReader Tategumi v2026.10.1 和 toumo 1.1.1，使用两层墨影、标准浓度和细淡纸纹。点击图片可以查看原尺寸。
 
 ### 横排 · 余华《活着》
 
 汇文明朝体。看正文留白处，纸纤维上还有一层淡淡的镜像字。
 
-![开启透墨的《活着》横排局部，汇文明朝体](docs/images/huozhe-huiwen-mincho-on.png)
+![开启透墨的《活着》横排局部，汇文明朝体](docs/images/huozhe-huiwen-mincho-03-on.png)
 
 ### 竖排 · 雨森たきび《負けヒロインが多すぎる！》
 
 思源宋体日文版（Source Han Serif JP）。背面的字也跟随原书竖排。
 
-![开启透墨的《負けヒロインが多すぎる！》竖排局部，思源宋体日文版](docs/images/makeine-source-han-serif-jp-on.png)
+![开启透墨的《負けヒロインが多すぎる！》竖排局部，思源宋体日文版](docs/images/makeine-source-han-serif-jp-03-on.png)
 
 <details>
-<summary>展开同页对照：关闭、仅纸纹、纸纹与透墨</summary>
+<summary>展开同页对照：关闭与开启</summary>
 
-三列取自同一页的同一区域。中间一列只显示纸纹，可以和右列比较背页的墨迹。
-
-| 书籍 | 关闭 | 仅纸纹 | 纸纹与透墨 |
-| --- | --- | --- | --- |
-| 《活着》 | ![横排原页](docs/images/huozhe-huiwen-mincho-off.png) | ![横排仅纸纹](docs/images/huozhe-huiwen-mincho-paper.png) | ![横排透墨](docs/images/huozhe-huiwen-mincho-on.png) |
-| 《負けヒロインが多すぎる！》 | ![竖排原页](docs/images/makeine-source-han-serif-jp-off.png) | ![竖排仅纸纹](docs/images/makeine-source-han-serif-jp-paper.png) | ![竖排透墨](docs/images/makeine-source-han-serif-jp-on.png) |
+| 书籍 | 关闭 | 开启 |
+| --- | --- | --- |
+| 《活着》 | ![汇文明朝体横排原页](docs/images/huozhe-huiwen-mincho-03-off.png) | ![同一位置开启透墨](docs/images/huozhe-huiwen-mincho-03-on.png) |
+| 《負けヒロインが多すぎる！》 | ![思源宋体日文版竖排原页](docs/images/makeine-source-han-serif-jp-03-off.png) | ![同一位置开启透墨](docs/images/makeine-source-han-serif-jp-03-on.png) |
 
 </details>
 
