@@ -3,8 +3,28 @@ local ffi = require("ffi")
 local floor, min, max = math.floor, math.min, math.max
 local Raster = {}
 local folder = debug.getinfo(1, "S").source:sub(2):match("^(.*[/])")
+-- Select the process ABI, which can differ from the device's CPU.
+-- Android has a different loader and plugin-storage policy.
+local function nativeLibrary()
+    if ffi.os ~= "Linux" or not ffi.abi("le") or ffi.abi("android") or os.getenv("IS_ANDROID") then
+        return
+    end
+    if ffi.arch == "arm64" then
+        return "toumo-aarch64.so"
+    elseif ffi.arch == "arm" and ffi.abi("hardfp") then
+        return "toumo-armhf.so"
+    elseif ffi.arch == "arm" and ffi.abi("softfp") then
+        -- Keep the original Cortex-A9 build on the device it was tuned for.
+        local device = package.loaded.device
+        if type(device) == "table" and device.model == "KindlePaperWhite3" then
+            return "toumo-armel.so"
+        end
+        return "toumo-armel-generic.so"
+    end
+end
 local native
-if ffi.os == "Linux" and ffi.arch == "arm" and require("device").model == "KindlePaperWhite3" then
+local library = nativeLibrary()
+if library then
     ffi.cdef([[
         void toumo_plate(const uint8_t*,int,int,int,int,int,int,int,uint8_t*,int);
         void toumo_add_layer(uint16_t*,const uint8_t*,int,int,int,int);
@@ -12,7 +32,19 @@ if ffi.os == "Linux" and ffi.arch == "arm" and require("device").model == "Kindl
         void toumo_mask(const uint16_t*,int,int,const uint8_t*,int,int,uint8_t*,int,int);
         void toumo_apply(uint8_t*,int,const uint8_t*,int,int,int);
     ]])
-    local ok, lib = pcall(ffi.load, folder .. "toumo-armel.so")
+    local ok, lib = pcall(function()
+        local loaded = ffi.load(folder .. library)
+        for _, symbol in ipairs({
+            "toumo_plate",
+            "toumo_add_layer",
+            "toumo_soften",
+            "toumo_mask",
+            "toumo_apply",
+        }) do
+            assert(loaded[symbol])
+        end
+        return loaded
+    end)
     if ok then
         native = lib
     end

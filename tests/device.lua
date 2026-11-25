@@ -53,10 +53,7 @@ texture:free()
 blank:free()
 plate:free()
 unit:free()
-local saved_model = Device.model
-Device.model = "VersoQA"
-local portable = dofile(plugin_dir .. "toumo_raster.lua")
-Device.model = saved_model
+local portable = dofile(root .. "/fallback/toumo_raster.lua")
 assert(not portable.accelerated)
 local base1 = BB.new(65, 57, BB.TYPE_BB8)
 base1:fill(BB.COLOR_WHITE)

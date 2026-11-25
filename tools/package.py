@@ -5,11 +5,11 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 root = Path(__file__).resolve().parents[1]
 plugin = root / 'toumo.koplugin'
-version = re.search(r'version\s*=\s*"([0-9.]+)"', (plugin / '_meta.lua').read_text()).group(1)
+version = re.search(r'version\s*=\s*"([0-9.]+(?:-[0-9A-Za-z.]+)?)"', (plugin / '_meta.lua').read_text()).group(1)
 output = root / 'dist' / f'toumo-v{version}.zip'
 output.parent.mkdir(exist_ok=True)
 files = ['_meta.lua', 'main.lua', 'toumo_job.lua', 'toumo_raster.lua', 'toumo_i18n.lua',
-         'paper.grain', 'toumo.c', 'toumo-armel.so', 'README.txt']
+         'paper.grain', 'toumo.c', 'toumo-armel.so', 'toumo-armel-generic.so', 'toumo-armhf.so', 'toumo-aarch64.so', 'README.txt']
 
 with ZipFile(output, 'w') as archive:
     for source in [plugin / name for name in files] + [root / 'LICENSE']:

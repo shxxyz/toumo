@@ -1,4 +1,4 @@
-/* Optional accelerator for the 32-bit ARM Kindle. All buffers are packed bytes
+/* Optional accelerator for ARM Linux readers. All buffers are packed bytes
  * in display-independent orientation. 16-bit accumulation keeps layers additive. */
 #include <stdint.h>
 static int clamp(int v,int lo,int hi) { return v<lo?lo:v>hi?hi:v; }

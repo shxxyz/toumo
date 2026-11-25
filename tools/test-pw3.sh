@@ -14,4 +14,4 @@ esac
 trap 'ssh "$host" "rm -rf $stage"' EXIT
 cd "$root"
 tar -czf - toumo.koplugin tests/device.lua tests/fixture.epub | ssh "$host" "cd '$stage' && tar -xzf -"
-ssh "$host" "set -eu; mv '$stage/tests/fixture.epub' '$stage/test.epub'; cd /mnt/us/koreader; ulimit -c 0; KO_HOME='$stage' LD_LIBRARY_PATH=./libs ./luajit '$stage/tests/device.lua' '$stage'"
+ssh "$host" "set -eu; mkdir '$stage/fallback'; cp '$stage/toumo.koplugin/toumo_raster.lua' '$stage/toumo.koplugin/paper.grain' '$stage/fallback/'; mv '$stage/tests/fixture.epub' '$stage/test.epub'; cd /mnt/us/koreader; ulimit -c 0; KO_HOME='$stage' LD_LIBRARY_PATH=./libs ./luajit '$stage/tests/device.lua' '$stage'"
