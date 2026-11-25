@@ -1,0 +1,1 @@
+{ global: vi_plate; vi_add_layer; vi_soften; vi_mask; vi_apply; local: *; };
