@@ -1,4 +1,4 @@
-Toumo 1.2.0
+Toumo 1.3.0
 
 Place the toumo.koplugin folder in koreader/plugins/ and restart KOReader.
 Open an EPUB in single-page view, then choose Tools → More tools → Toumo.
@@ -11,6 +11,6 @@ Choose zero layers for paper grain alone. Night mode, scrolling and two-page
 view use the reader's own rendering.
 
 Tested on a Kindle Paperwhite 3 with KOReader Tategumi v2026.10.1.
-The optional PW3 accelerator is built from toumo.c. Other devices use Lua.
+Toumo uses the C accelerator on ARM Linux readers when a matching library is available. Otherwise it uses Lua.
 
 Source, screenshots and releases: https://github.com/shxxyz/toumo

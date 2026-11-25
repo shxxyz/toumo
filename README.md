@@ -29,15 +29,15 @@ The first and last pages use only neighbors that exist. Text, inline illustratio
 
 ## Compatibility and performance
 
-Tested on a physical Kindle Paperwhite 3 and in QEMU with the Kindle, Kobo, and 64-bit reMarkable builds of KOReader Tategumi v2026.10.1. The QEMU tests cover the preview version of the C accelerator.
+Tested on a physical Kindle Paperwhite 3 and in QEMU with the Kindle, Kobo, and 64-bit reMarkable builds of KOReader Tategumi v2026.10.1.
 
 While you read, it prepares the ink for the next page in your direction of travel. Text, grain, and show-through are drawn in one frame. A jump to an uncached page can take longer. If the neighboring pages fail to render or exceed the foreground wait budget, the reader uses the available layers or paper grain for that frame.
 
-The v1.2.0 release uses the C accelerator on the Paperwhite 3 and the Lua renderer on other devices.
+Toumo uses the C accelerator on ARM Linux readers when a matching library is available. Otherwise it uses Lua.
 
 ## Build and test
 
-Run `python3 tools/package.py` to produce the installable ZIP in `dist/`. To rebuild the PW3 accelerator, run `tools/build-armel.sh` first. The release was built with Zig 0.13.0. Use the `ZIG` environment variable to select the compiler executable.
+Run `python3 tools/package.py` to produce the installable ZIP in `dist/`. To rebuild the ARM libraries, run `tools/build-native.sh` first. The release was built with Zig 0.13.0. Use the `ZIG` environment variable to select the compiler executable.
 
 With SSH configured for a Paperwhite 3, run `tools/test-pw3.sh <ssh-host>`. The on-device suite checks mirror direction, ink density, illustrated pages, prefetch, and cancellation. It uses the original EPUB fixture under `tests/`, temporary settings, and an offscreen buffer. It also verifies the English, Chinese, and Japanese menus. The test setup expects Source Han Serif JP at `koreader/fonts/SourceHanSerifJP-Regular.otf`.
 

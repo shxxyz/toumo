@@ -7,6 +7,11 @@ local native = dofile(arg[1] .. "/toumo_raster.lua")
 local portable = dofile(arg[2] .. "/toumo_raster.lua")
 assert(native.accelerated, "expected a matching native library")
 assert(not portable.accelerated, "expected Lua fallback in the second directory")
+print("TOUMO_NATIVE_LIB", native.native_library)
+if arg[4] and ffi.arch == "arm" and ffi.abi("softfp") then
+    local generic = dofile(arg[4] .. "/toumo_raster.lua")
+    assert(generic.native_library == "toumo-armel-generic.so", "generic library fallback failed")
+end
 local have_cbb = BB.has_cblitbuffer
 local function equal(a, b, label)
     local x, y = BB.tostring(a), BB.tostring(b)

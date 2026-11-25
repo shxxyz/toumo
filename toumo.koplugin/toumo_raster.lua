@@ -1,30 +1,57 @@
 local BB = require("ffi/blitbuffer")
 local ffi = require("ffi")
+local bit = require("bit")
 local floor, min, max = math.floor, math.min, math.max
 local Raster = {}
 local folder = debug.getinfo(1, "S").source:sub(2):match("^(.*[/])")
--- Select the process ABI, which can differ from the device's CPU.
--- Android has a different loader and plugin-storage policy.
-local function nativeLibrary()
+-- Only called in a little-endian, 32-bit ARM process. The kernel's HWCAP
+-- describes the instructions this process can use, including in emulation.
+local function hasArmNeon()
+    local file = io.open("/proc/self/auxv", "rb")
+    if not file then
+        return false
+    end
+    local entry = ffi.new("uint32_t[2]")
+    local neon = false
+    while true do
+        local bytes = file:read(8)
+        if not bytes or #bytes ~= 8 then
+            break
+        end
+        ffi.copy(entry, bytes, 8)
+        if entry[0] == 16 then -- AT_HWCAP, HWCAP_NEON = 1 << 12
+            neon = bit.band(entry[1], 0x1000) ~= 0
+            break
+        end
+        if entry[0] == 0 then
+            break
+        end -- AT_NULL
+    end
+    file:close()
+    return neon
+end
+
+-- Android's app loader and external plugin storage need separate support.
+local function nativeLibraries()
     if ffi.os ~= "Linux" or not ffi.abi("le") or ffi.abi("android") or os.getenv("IS_ANDROID") then
-        return
+        return {}
     end
     if ffi.arch == "arm64" then
-        return "toumo-aarch64.so"
+        return { "toumo-aarch64.so" }
     elseif ffi.arch == "arm" and ffi.abi("hardfp") then
-        return "toumo-armhf.so"
+        return { "toumo-armhf.so" }
     elseif ffi.arch == "arm" and ffi.abi("softfp") then
-        -- Keep the original Cortex-A9 build on the device it was tuned for.
-        local device = package.loaded.device
-        if type(device) == "table" and device.model == "KindlePaperWhite3" then
-            return "toumo-armel.so"
+        if hasArmNeon() then
+            return { "toumo-armel.so", "toumo-armel-generic.so" }
         end
-        return "toumo-armel-generic.so"
+        return { "toumo-armel-generic.so" }
     end
+    return {}
 end
+
 local native
-local library = nativeLibrary()
-if library then
+local libraries = nativeLibraries()
+if #libraries > 0 then
     ffi.cdef([[
         void toumo_plate(const uint8_t*,int,int,int,int,int,int,int,uint8_t*,int);
         void toumo_add_layer(uint16_t*,const uint8_t*,int,int,int,int);
@@ -32,21 +59,25 @@ if library then
         void toumo_mask(const uint16_t*,int,int,const uint8_t*,int,int,uint8_t*,int,int);
         void toumo_apply(uint8_t*,int,const uint8_t*,int,int,int);
     ]])
-    local ok, lib = pcall(function()
-        local loaded = ffi.load(folder .. library)
-        for _, symbol in ipairs({
-            "toumo_plate",
-            "toumo_add_layer",
-            "toumo_soften",
-            "toumo_mask",
-            "toumo_apply",
-        }) do
-            assert(loaded[symbol])
+    for _, library in ipairs(libraries) do
+        local ok, lib = pcall(function()
+            local loaded = ffi.load(folder .. library)
+            for _, symbol in ipairs({
+                "toumo_plate",
+                "toumo_add_layer",
+                "toumo_soften",
+                "toumo_mask",
+                "toumo_apply",
+            }) do
+                assert(loaded[symbol])
+            end
+            return loaded
+        end)
+        if ok then
+            native = lib
+            Raster.native_library = library
+            break
         end
-        return loaded
-    end)
-    if ok then
-        native = lib
     end
 end
 Raster.accelerated = native ~= nil
@@ -90,7 +121,6 @@ end
 -- so every second layer is reflected back to its original orientation.
 local weights = { 256, 112, 52, 24 }
 local bayer = { 0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5 }
-local bit = require("bit")
 local grain_file = folder .. "paper.grain"
 local paper_bytes
 local function getPaper()
