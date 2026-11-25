@@ -29,9 +29,11 @@ The first and last pages use only neighbors that exist. Text, inline illustratio
 
 ## Compatibility and performance
 
-Toumo has been tested on a **Kindle Paperwhite 3 with KOReader Tategumi v2026.10.1**. While you read, it prepares the ink for the next page in your direction of travel. Text, grain, and show-through are drawn in one frame. A jump to an uncached page can take longer. If the neighboring pages fail to render or exceed the foreground wait budget, the reader uses the available layers or paper grain for that frame.
+Tested on a physical Kindle Paperwhite 3 and in QEMU with the Kindle, Kobo, and 64-bit reMarkable builds of KOReader Tategumi v2026.10.1. The QEMU tests cover the preview version of the C accelerator.
 
-The plugin is written in Lua and ships with an optional ARMEL accelerator built from `toumo.c`. The native library loads only on the Paperwhite 3. Other devices use the Lua renderer. Hardware testing so far covers the Paperwhite 3.
+While you read, it prepares the ink for the next page in your direction of travel. Text, grain, and show-through are drawn in one frame. A jump to an uncached page can take longer. If the neighboring pages fail to render or exceed the foreground wait budget, the reader uses the available layers or paper grain for that frame.
+
+The v1.2.0 release uses the C accelerator on the Paperwhite 3 and the Lua renderer on other devices.
 
 ## Build and test
 
