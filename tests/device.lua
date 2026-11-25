@@ -1,7 +1,7 @@
 io.stdout:setvbuf("line")
 require("setupkoenv")
 local root = assert(arg[1])
-local plugin_dir = root .. "/versoink.koplugin/"
+local plugin_dir = root .. "/toumo.koplugin/"
 package.path = plugin_dir .. "?.lua;" .. package.path
 G_defaults = require("luadefaults"):open()
 G_reader_settings = require("luasettings"):open(root .. "/ephemeral.lua")
@@ -11,7 +11,7 @@ require("document/canvascontext"):init(Device)
 local UI = require("ui/uimanager")
 local BB = require("ffi/blitbuffer")
 local ffi = require("ffi")
-local Raster = require("versoink_raster")
+local Raster = require("toumo_raster")
 local socket = require("socket")
 local now = socket.gettime
 local w, h = 1072, 1448
@@ -55,7 +55,7 @@ plate:free()
 unit:free()
 local saved_model = Device.model
 Device.model = "VersoQA"
-local portable = dofile(plugin_dir .. "versoink_raster.lua")
+local portable = dofile(plugin_dir .. "toumo_raster.lua")
 Device.model = saved_model
 assert(not portable.accelerated)
 local base1 = BB.new(65, 57, BB.TYPE_BB8)
@@ -104,13 +104,56 @@ local view = {
     visible_area = { w = w, h = h },
     drawPageView = require("apps/reader/modules/readerview").drawPageView,
 }
-local ui = { document = doc, view = view, rolling = {}, highlight = {}, menu = {
-    registerToMainMenu = function() end,
-} }
+local ui = {
+    document = doc,
+    view = view,
+    rolling = {},
+    highlight = {},
+    menu = {
+        registerToMainMenu = function() end,
+    },
+}
 local P = dofile(plugin_dir .. "main.lua")
 local plugin = P:new({ ui = ui, document = doc })
 assert(plugin.wrapper and view.drawPageView == plugin.wrapper)
 assert(engine:getPages() >= 7)
+-- Use KOReader's locale loader just as the UI does. The settings and EPUB
+-- in this harness are temporary, so no reader preferences are changed.
+local gettext = require("gettext")
+local previous_language = gettext.current_lang
+local function labels()
+    local m = {}
+    plugin:addToMainMenu(m)
+    local root = m.toumo
+    local ordered = { root.text, dofile(plugin_dir .. "_meta.lua").description }
+    for _, item in ipairs(root.sub_item_table) do
+        ordered[#ordered + 1] = item.text
+        for _, choice in ipairs(item.sub_item_table or {}) do
+            ordered[#ordered + 1] = choice.text
+        end
+    end
+    assert(dofile(plugin_dir .. "_meta.lua").fullname == root.text)
+    return ordered
+end
+gettext.changeLang("C")
+local english = labels()
+assert(english[1] == "Toumo" and english[3] == "Enable show-through")
+for _, case in ipairs({
+    { "zh_CN", "纸背透墨", "启用透墨" },
+    { "zh_TW", "紙背透墨", "啟用透墨" },
+    { "ja", "紙の裏写り", "裏写りを有効にする" },
+}) do
+    assert(gettext.changeLang(case[1]))
+    local actual = labels()
+    assert(actual[1] == case[2] and actual[3] == case[3] and #actual == #english)
+    for i = 1, #english do
+        assert(actual[i] ~= english[i], case[1] .. " untranslated: " .. english[i])
+    end
+    print("UI_LOCALE", case[1], actual[1], #actual)
+end
+assert(gettext.changeLang("fr"))
+assert(table.concat(labels(), "|") == table.concat(english, "|"))
+gettext.changeLang(previous_language)
 local function draw(n)
     view.state.page = n
     local start = now()
@@ -353,7 +396,7 @@ local closing = plugin.job.pid
 plugin:onCloseDocument()
 assert(not plugin.job and ffi.C.waitpid(closing, nil, ffi.C.WNOHANG) == -1)
 assert(view.drawPageView ~= plugin.wrapper and redraws == 0)
-local Job = require("versoink_job")
+local Job = require("toumo_job")
 local job = assert(Job.start(1, 32, 32, function()
     ffi.C.usleep(4000000)
 end))

@@ -6,13 +6,13 @@ local folder = debug.getinfo(1, "S").source:sub(2):match("^(.*[/])")
 local native
 if ffi.os == "Linux" and ffi.arch == "arm" and require("device").model == "KindlePaperWhite3" then
     ffi.cdef([[
-        void vi_plate(const uint8_t*,int,int,int,int,int,int,int,uint8_t*,int);
-        void vi_add_layer(uint16_t*,const uint8_t*,int,int,int,int);
-        void vi_soften(uint16_t*,uint16_t*,int,int);
-        void vi_mask(const uint16_t*,int,int,const uint8_t*,int,int,uint8_t*,int,int);
-        void vi_apply(uint8_t*,int,const uint8_t*,int,int,int);
+        void toumo_plate(const uint8_t*,int,int,int,int,int,int,int,uint8_t*,int);
+        void toumo_add_layer(uint16_t*,const uint8_t*,int,int,int,int);
+        void toumo_soften(uint16_t*,uint16_t*,int,int);
+        void toumo_mask(const uint16_t*,int,int,const uint8_t*,int,int,uint8_t*,int,int);
+        void toumo_apply(uint8_t*,int,const uint8_t*,int,int,int);
     ]])
-    local ok, lib = pcall(ffi.load, folder .. "versoink-armel.so")
+    local ok, lib = pcall(ffi.load, folder .. "toumo-armel.so")
     if ok then
         native = lib
     end
@@ -35,7 +35,7 @@ function Raster.plate(page, margins, header)
     local left, right = margins.left or 0, w - (margins.right or 0)
     local top, bottom = (margins.top or 0) + (header or 0), h - (margins.bottom or 0)
     if native then
-        native.vi_plate(src, ss, w, h, left, top, right, bottom, dst, ds)
+        native.toumo_plate(src, ss, w, h, left, top, right, bottom, dst, ds)
         if gray ~= page then
             gray:free()
         end
@@ -80,7 +80,7 @@ function Raster.mask(layers, w, h, strength, texture, base)
             local src = ffi.cast("const uint8_t*", plate.data)
             local stride = tonumber(plate.stride)
             if native then
-                native.vi_add_layer(coverage, src, stride, cols, rows, depth)
+                native.toumo_add_layer(coverage, src, stride, cols, rows, depth)
             else
                 local reverse = depth % 2 == 0
                 for y = 0, rows - 1 do
@@ -99,7 +99,7 @@ function Raster.mask(layers, w, h, strength, texture, base)
     if next(layers) then
         local tmp = ffi.new("uint16_t[?]", cols * rows)
         if native then
-            native.vi_soften(coverage, tmp, cols, rows)
+            native.toumo_soften(coverage, tmp, cols, rows)
         else
             for y = 0, rows - 1 do
                 for x = 0, cols - 1 do
@@ -129,7 +129,7 @@ function Raster.mask(layers, w, h, strength, texture, base)
         end
     end
     if native then
-        native.vi_mask(coverage, w, h, paper, texture, strength, dst, ds, base and 1 or 0)
+        native.toumo_mask(coverage, w, h, paper, texture, strength, dst, ds, base and 1 or 0)
         return mask
     end
     local xmap = ffi.new("uint16_t[?]", w)
@@ -188,7 +188,7 @@ function Raster.apply(mask, target, x, y, w, h)
         and y + h <= target.h
     then
         local dst = ffi.cast("uint8_t*", target.data) + y * target.stride + x
-        native.vi_apply(dst, target.stride, ffi.cast("const uint8_t*", mask.data), mask.stride, w, h)
+        native.toumo_apply(dst, target.stride, ffi.cast("const uint8_t*", mask.data), mask.stride, w, h)
     else
         target:alphablitFrom(mask, x, y, 0, 0, w, h)
     end

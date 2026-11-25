@@ -2,7 +2,7 @@
  * in display-independent orientation. 16-bit accumulation keeps layers additive. */
 #include <stdint.h>
 static int clamp(int v,int lo,int hi) { return v<lo?lo:v>hi?hi:v; }
-void vi_plate(const uint8_t *src,int stride,int w,int h,int left,int top,int right,int bottom,uint8_t *dst,int ds) {
+void toumo_plate(const uint8_t *src,int stride,int w,int h,int left,int top,int right,int bottom,uint8_t *dst,int ds) {
     const int x0=clamp((w-right+1)/2,0,(w+1)/2), x1=clamp((w-left)/2,x0,(w+1)/2);
     const int y0=clamp((top+1)/2,0,(h+1)/2), y1=clamp(bottom/2,y0,(h+1)/2);
     for(int y=y0;y<y1;y++) {
@@ -13,7 +13,7 @@ void vi_plate(const uint8_t *src,int stride,int w,int h,int left,int top,int rig
         }
     }
 }
-void vi_add_layer(uint16_t *sum,const uint8_t *plate,int stride,int w,int h,int depth) {
+void toumo_add_layer(uint16_t *sum,const uint8_t *plate,int stride,int w,int h,int depth) {
     static const int weights[]={256,112,52,24};
     for(int y=0;y<h;y++) {
         const uint8_t *row=plate+y*stride;
@@ -24,7 +24,7 @@ void vi_add_layer(uint16_t *sum,const uint8_t *plate,int stride,int w,int h,int 
     }
 }
 /* A separable 1:2:1 filter models the spread of ink through the paper. */
-void vi_soften(uint16_t *sum,uint16_t *tmp,int w,int h) {
+void toumo_soften(uint16_t *sum,uint16_t *tmp,int w,int h) {
     for(int y=0;y<h;y++) for(int x=0;x<w;x++) {
         const uint16_t *r=sum+y*w;
         tmp[y*w+x]=(r[x?x-1:0]+2*r[x]+r[x+1<w?x+1:x]+2)/4;
@@ -34,7 +34,7 @@ void vi_soften(uint16_t *sum,uint16_t *tmp,int w,int h) {
         for(int x=0;x<w;x++) sum[y*w+x]=(a[x]+2*b[x]+c[x]+2)/4;
     }
 }
-void vi_mask(const uint16_t *sum,int w,int h,const uint8_t *paper,int texture,int strength,uint8_t *mask,int stride,int had_paper) {
+void toumo_mask(const uint16_t *sum,int w,int h,const uint8_t *paper,int texture,int strength,uint8_t *mask,int stride,int had_paper) {
     static const int bayer[]={0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5};
     uint8_t quant[16][128];
     for(int phase=0;phase<16;phase++) for(int i=0;i<128;i++)
@@ -60,7 +60,7 @@ void vi_mask(const uint16_t *sum,int w,int h,const uint8_t *paper,int texture,in
 }
 /* Apply a black alpha stencil to a normal 8-bit reading surface. Keep the
  * fast transparent case and use rounded integer /255 for antialiased text. */
-void vi_apply(uint8_t *dst,int ds,const uint8_t *mask,int ms,int w,int h) {
+void toumo_apply(uint8_t *dst,int ds,const uint8_t *mask,int ms,int w,int h) {
     for(int y=0;y<h;y++) {
         uint8_t *row=dst+y*ds; const uint8_t *a=mask+y*ms+1;
         for(int x=0;x<w;x++) {

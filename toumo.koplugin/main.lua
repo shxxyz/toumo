@@ -1,35 +1,39 @@
+local T = require("toumo_i18n")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local Job = require("versoink_job")
+local Job = require("toumo_job")
 local UIManager = require("ui/uimanager")
 local Screen = require("device").screen
 local BB = require("ffi/blitbuffer")
-local Raster = require("versoink_raster")
+local Raster = require("toumo_raster")
 local logger = require("logger")
 
-local Plugin = WidgetContainer:extend({ name = "versoink" })
-local modes =
-    { { "奇数往前，偶数往后", "sheet" }, { "总是往前", "previous" }, { "总是往后", "next" } }
+local Plugin = WidgetContainer:extend({ name = "toumo" })
+local modes = {
+    { "Odd pages look back, even pages look ahead", "sheet" },
+    { "Always look back", "previous" },
+    { "Always look ahead", "next" },
+}
 local depths =
-    { { "不叠印，只看纸纹", 0 }, { "一层", 1 }, { "两层", 2 }, { "三层", 3 }, { "四层", 4 } }
-local textures = { { "关闭", 0 }, { "细淡", 13 }, { "明显", 26 } }
-local strengths = { { "淡", 22 }, { "标准", 36 }, { "较深", 52 } }
+    { { "Paper grain only", 0 }, { "1 layer", 1 }, { "2 layers", 2 }, { "3 layers", 3 }, { "4 layers", 4 } }
+local textures = { { "Off", 0 }, { "Subtle", 13 }, { "Pronounced", 26 } }
+local strengths = { { "Light", 22 }, { "Standard", 36 }, { "Strong", 52 } }
 
 function Plugin:init()
     local doc = self.ui and self.ui.document
     if not doc or not self.ui.rolling or not (doc.file or ""):lower():match("%.epub$") then
         return
     end
-    self.enabled = G_reader_settings:nilOrTrue("versoink_enabled")
-    self.mode = G_reader_settings:readSetting("versoink_source", "sheet")
-    self.depth = G_reader_settings:readSetting("versoink_depth", 2)
+    self.enabled = G_reader_settings:nilOrTrue("toumo_enabled")
+    self.mode = G_reader_settings:readSetting("toumo_source", "sheet")
+    self.depth = G_reader_settings:readSetting("toumo_depth", 2)
     if type(self.depth) ~= "number" or self.depth % 1 ~= 0 or self.depth < 0 or self.depth > 4 then
         self.depth = 2
     end
-    self.texture = G_reader_settings:readSetting("versoink_texture", 13)
+    self.texture = G_reader_settings:readSetting("toumo_texture", 13)
     if self.texture ~= 0 and self.texture ~= 13 and self.texture ~= 26 then
         self.texture = 13
     end
-    self.strength = G_reader_settings:readSetting("versoink_strength", 36)
+    self.strength = G_reader_settings:readSetting("toumo_strength", 36)
     if self.strength ~= 22 and self.strength ~= 36 and self.strength ~= 52 then
         self.strength = 36
     end
@@ -228,7 +232,7 @@ function Plugin:maskFor(page, last, w, h)
                 return mask
             end
         end
-        logger.warn("VersoInk: adjacent-page render unavailable", page)
+        logger.warn("Toumo: adjacent-page render unavailable", page)
     end
     if next(layers) then
         return Raster.mask(layers, w, h, self.strength, self.texture, self.paper)
@@ -247,18 +251,15 @@ function Plugin:overlay(view, target, x, y)
     if not page then
         return
     end
-    local layout = table.concat(
-        {
-            w,
-            h,
-            doc:getDocumentRenderingHash(true),
-            doc.configurable.font_gamma or 0,
-            doc._smooth_scaling and 1 or 0,
-            Screen.sw_dithering and 1 or 0,
-            doc.render_color and 1 or 0,
-        },
-        ":"
-    )
+    local layout = table.concat({
+        w,
+        h,
+        doc:getDocumentRenderingHash(true),
+        doc.configurable.font_gamma or 0,
+        doc._smooth_scaling and 1 or 0,
+        Screen.sw_dithering and 1 or 0,
+        doc.render_color and 1 or 0,
+    }, ":")
     if self.layout ~= layout then
         self:reset()
         self.layout = layout
@@ -324,7 +325,7 @@ function Plugin:addToMainMenu(items)
         for _, item in ipairs(list) do
             local label, value = item[1], item[2]
             table.insert(menu, {
-                text = label,
+                text = T(label),
                 radio = true,
                 checked_func = function()
                     return self[field] == value
@@ -336,23 +337,23 @@ function Plugin:addToMainMenu(items)
         end
         return menu
     end
-    items.versoink = {
-        text = "纸背透墨",
+    items.toumo = {
+        text = T("Toumo"),
         sorting_hint = "more_tools",
         sub_item_table = {
             {
-                text = "启用透墨",
+                text = T("Enable show-through"),
                 checked_func = function()
                     return self.enabled
                 end,
                 callback = function()
-                    self:configure("enabled", "versoink_enabled", not self.enabled)
+                    self:configure("enabled", "toumo_enabled", not self.enabled)
                 end,
             },
-            { text = "背面取哪一页", sub_item_table = choices(modes, "mode", "versoink_source") },
-            { text = "叠加页数", sub_item_table = choices(depths, "depth", "versoink_depth") },
-            { text = "纸张纹理", sub_item_table = choices(textures, "texture", "versoink_texture") },
-            { text = "墨迹浓度", sub_item_table = choices(strengths, "strength", "versoink_strength") },
+            { text = T("Source pages"), sub_item_table = choices(modes, "mode", "toumo_source") },
+            { text = T("Ink layers"), sub_item_table = choices(depths, "depth", "toumo_depth") },
+            { text = T("Paper grain"), sub_item_table = choices(textures, "texture", "toumo_texture") },
+            { text = T("Ink density"), sub_item_table = choices(strengths, "strength", "toumo_strength") },
         },
     }
 end
