@@ -1,4 +1,4 @@
-# Toumo (纸背透墨)
+# Toumo 透墨
 
 Toumo gives EPUB pages in KOReader the faint show-through of ink on thin paper. It uses the text and illustrations on the book’s actual neighboring pages, so the ink follows the book’s layout, including vertical Japanese text.
 
